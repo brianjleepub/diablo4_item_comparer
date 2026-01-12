@@ -1,0 +1,132 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+postgres_data/
+
+# PostgreSQL
+*.log
+*.pid
+
+# OCR temp files
+temp/
+tmp/
+*.tmp
+
+# Screenshots and test images (adjust if you want to commit test data)
+screenshots/
+test_images/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+!docs/**/*.png
+!docs/**/*.jpg
+
+# Data files (uncomment specific files to track)
+data/raw/*.json
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# ShareX captures (if storing locally)
+captures/
+sharex_captures/
+
+# Scraped data cache
+.cache/
+cache/
+
+# Model files (OCR models can be large)
+models/*.pth
+models/*.pt
+models/*.h5
+*.model
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Large data archives
+*.zip
+*.tar.gz
+*.7z
+*.rar
+
+# Backup files
+*.bak
+*.backup
