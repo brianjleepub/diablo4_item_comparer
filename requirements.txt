@@ -9,9 +9,10 @@ chompjs>=1.2.3
 # Data handling
 pandas>=2.2.0
 
-# PostgreSQL (for later)
+# PostgreSQL
 psycopg2-binary>=2.9.9
 SQLAlchemy>=2.0.25
+alembic>=1.13.0
 
 # OCR (for later)
 pytesseract>=0.3.10
