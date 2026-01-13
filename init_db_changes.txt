@@ -1,0 +1,69 @@
+# Transaction handling:
+## Original code:
+
+db.add(obj)
+db.flush()
+...
+except IntegrityError:
+  db.rollback()
+## New code:
+try:
+  db.add(char_class)
+  db.commit()
+except IntegrityError:
+  db.rollback()
+
+# AffixCategory dependency is assumed but not enforced
+## Original code:
+default_category = db.query(AffixCategory).filter_by(name='Utility').first()
+## New code
+if not default_category:
+  raise RuntimeError("Utility affix category not found. Seed categories first.")
+# Item slot logic can create inconsistent data
+# Original code:
+slot=slot_mapping.get(
+  internal_id,
+  'MainHand' if internal_id in weapon_types else None
+)
+## New code:
+slot = slot_mapping.get(internal_id)
+if slot is None and internal_id in weapon_types:
+    slot = 'MainHand'
+elif slot is None:
+    print(f"  ! Item type {internal_id} has no slot")
+# Aspect category is a string, affix category is a FK — inconsistency
+# Original code:
+category_id=default_category.id
+## New code:
+category='Utility'
+Either:
+# Both use foreign keys, or
+# Both use enums / strings
+# Mixing them guarantees future refactors hurt twice as much. If this is intentional, document it loudly. If not, align them now while the DB is young and forgiving.
+
+# Rollbacks inside loops = performance + logic hazards
+# Every duplicate triggers a rollback, which:
+# Clears the session
+# Forces SQLAlchemy to re-sync state
+# Gets expensive with large JSON files
+# Better approach (clean and fast):
+# Preload existing internal_ids into a set
+# Skip inserts instead of relying on exceptions
+# Original code:
+existing = {
+    a.internal_id
+    for a in db.query(Affix.internal_id).all()
+}
+
+for internal_id, name in affixes_data.items():
+    if internal_id in existing:
+        continue
+    ...
+# sys.path.insert works but could try:
+# Original code:
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# If this is a one-off admin script, acceptable. If this becomes part of CI/CD, move to proper module execution:
+python -m yourpackage.init_db
+
+# Printing progress every 100 affixes is good; consider flushing stdout for long runs
+# print()-based logging is fine for now, but you’ll want logging once this grows
