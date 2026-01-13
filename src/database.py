@@ -16,7 +16,7 @@ from models import Base
 # Database configuration
 DATABASE_URL = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:postgres@localhost:5432/diablo4_items'
+    'postgresql://diablo_items:omglol19@localhost:5432/diablo4_items'
 )
 
 # Create engine
