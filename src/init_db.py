@@ -83,6 +83,10 @@ class DatabaseSeeder:
             self.stats['classes'] += 1
             print(f"  ✓ {class_data['name']}")
 
+        # Flush so subsequent queries in same transaction can see the data
+        if self.stats['classes'] > 0:
+            db.flush()
+
     def seed_item_types(self, db):
         """Seed item types from d4lf data"""
         print("\nSeeding item types...")
@@ -146,6 +150,10 @@ class DatabaseSeeder:
             self.stats['item_types'] += 1
             print(f"  ✓ {name}")
 
+        # Flush so subsequent queries in same transaction can see the data
+        if self.stats['item_types'] > 0:
+            db.flush()
+
     def seed_affix_categories(self, db):
         """Seed affix categories"""
         print("\nSeeding affix categories...")
@@ -170,6 +178,10 @@ class DatabaseSeeder:
             db.add(category)
             self.stats['affix_categories'] += 1
             print(f"  ✓ {cat_data['name']}")
+
+        # Flush so subsequent queries in same transaction can see the data
+        if self.stats['affix_categories'] > 0:
+            db.flush()
 
     def seed_affixes(self, db):
         """Seed affixes from d4lf data"""
