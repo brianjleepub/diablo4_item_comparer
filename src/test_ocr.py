@@ -47,9 +47,8 @@ def initialize_ocr():
 
     try:
         ocr = PaddleOCR(
-            use_angle_cls=True,  # Enable angle classification
-            lang='en',            # English language
-            show_log=False        # Suppress verbose logs
+            use_textline_orientation=True,  # Enable angle classification (replaces use_angle_cls)
+            lang='en',                       # English language
         )
         print("  ✓ PaddleOCR initialized successfully")
         print("  Using standard English model (not D4-custom)")
