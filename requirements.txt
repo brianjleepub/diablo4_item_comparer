@@ -14,10 +14,13 @@ psycopg2-binary>=2.9.9
 SQLAlchemy>=2.0.25
 alembic>=1.13.0
 
-# OCR (for later)
-pytesseract>=0.3.10
-Pillow>=10.2.0
+# OCR
+paddlepaddle>=2.6.0
+paddleocr>=2.7.0
 opencv-python>=4.9.0.80
+Pillow>=10.2.0
+# Tesseract (alternative OCR engine)
+pytesseract>=0.3.10
 
 # Utilities
 python-dotenv>=1.0.0
