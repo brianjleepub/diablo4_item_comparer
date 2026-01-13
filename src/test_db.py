@@ -11,6 +11,7 @@ from decimal import Decimal
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from sqlalchemy import text
 from database import get_db
 from models import (
     Class, ItemType, AffixCategory, Affix, Aspect,
@@ -32,7 +33,7 @@ def test_connection():
     try:
         with get_db() as db:
             # Simple query to test connection
-            result = db.execute("SELECT 1").scalar()
+            result = db.execute(text("SELECT 1")).scalar()
             print(f"✓ Connection successful (test query returned: {result})")
             return True
     except Exception as e:
