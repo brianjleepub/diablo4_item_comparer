@@ -10,7 +10,8 @@ from typing import Dict, List
 
 from sqlalchemy.exc import IntegrityError
 
-# Add parent directory to path
+# TODO: Consider moving to proper module execution (python -m src.init_db)
+# when this becomes part of CI/CD. For now, sys.path.insert is acceptable.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import get_db, init_db
@@ -69,16 +70,18 @@ class DatabaseSeeder:
             {'name': 'Paladin', 'internal_id': 'paladin'},
         ]
 
+        # Pre-load existing classes to avoid rollbacks
+        existing_names = {c.name for c in db.query(Class.name).all()}
+
         for class_data in classes:
-            try:
-                char_class = Class(**class_data)
-                db.add(char_class)
-                db.flush()
-                self.stats['classes'] += 1
-                print(f"  ✓ {class_data['name']}")
-            except IntegrityError:
-                db.rollback()
+            if class_data['name'] in existing_names:
                 print(f"  - {class_data['name']} (already exists)")
+                continue
+
+            char_class = Class(**class_data)
+            db.add(char_class)
+            self.stats['classes'] += 1
+            print(f"  ✓ {class_data['name']}")
 
     def seed_item_types(self, db):
         """Seed item types from d4lf data"""
@@ -117,22 +120,31 @@ class DatabaseSeeder:
             'Helm', 'ChestArmor', 'Gloves', 'Legs', 'Boots', 'Shield'
         }
 
+        # Pre-load existing item types
+        existing_internal_ids = {it.internal_id for it in db.query(ItemType.internal_id).all()}
+
         for internal_id, name in item_types_data.items():
-            try:
-                item_type = ItemType(
-                    name=name,
-                    internal_id=internal_id,
-                    slot=slot_mapping.get(internal_id, 'MainHand' if internal_id in weapon_types else None),
-                    is_weapon=internal_id in weapon_types,
-                    is_armor=internal_id in armor_types,
-                )
-                db.add(item_type)
-                db.flush()
-                self.stats['item_types'] += 1
-                print(f"  ✓ {name}")
-            except IntegrityError:
-                db.rollback()
+            if internal_id in existing_internal_ids:
                 print(f"  - {name} (already exists)")
+                continue
+
+            # Clarified slot logic
+            slot = slot_mapping.get(internal_id)
+            if slot is None and internal_id in weapon_types:
+                slot = 'MainHand'
+            elif slot is None:
+                print(f"  ! Item type {internal_id} has no slot mapping")
+
+            item_type = ItemType(
+                name=name,
+                internal_id=internal_id,
+                slot=slot,
+                is_weapon=internal_id in weapon_types,
+                is_armor=internal_id in armor_types,
+            )
+            db.add(item_type)
+            self.stats['item_types'] += 1
+            print(f"  ✓ {name}")
 
     def seed_affix_categories(self, db):
         """Seed affix categories"""
@@ -146,16 +158,18 @@ class DatabaseSeeder:
             {'name': 'Mobility', 'description': 'Movement speed and positioning'},
         ]
 
+        # Pre-load existing categories
+        existing_names = {c.name for c in db.query(AffixCategory.name).all()}
+
         for cat_data in categories:
-            try:
-                category = AffixCategory(**cat_data)
-                db.add(category)
-                db.flush()
-                self.stats['affix_categories'] += 1
-                print(f"  ✓ {cat_data['name']}")
-            except IntegrityError:
-                db.rollback()
+            if cat_data['name'] in existing_names:
                 print(f"  - {cat_data['name']} (already exists)")
+                continue
+
+            category = AffixCategory(**cat_data)
+            db.add(category)
+            self.stats['affix_categories'] += 1
+            print(f"  ✓ {cat_data['name']}")
 
     def seed_affixes(self, db):
         """Seed affixes from d4lf data"""
@@ -173,28 +187,36 @@ class DatabaseSeeder:
         # Get default category (Utility)
         default_category = db.query(AffixCategory).filter_by(name='Utility').first()
 
+        # Enforce dependency
+        if not default_category:
+            print("  ✗ Utility affix category not found. Seed categories first.")
+            return
+
+        # Pre-load existing affixes to avoid rollbacks
+        existing_internal_ids = {a.internal_id for a in db.query(Affix.internal_id).all()}
+
+        added_count = 0
         for internal_id, name in affixes_data.items():
-            try:
-                affix = Affix(
-                    internal_id=internal_id,
-                    name=name,
-                    category_id=default_category.id if default_category else None,
-                    # Leave ranges empty for now - will be populated later
-                    min_value=None,
-                    max_value=None,
-                    is_percentage=False,
-                )
-                db.add(affix)
-                db.flush()
-                self.stats['affixes'] += 1
+            if internal_id in existing_internal_ids:
+                continue
 
-                if self.stats['affixes'] % 100 == 0:
-                    print(f"  ... {self.stats['affixes']} affixes loaded")
+            affix = Affix(
+                internal_id=internal_id,
+                name=name,
+                category_id=default_category.id,
+                # Leave ranges empty for now - will be populated later
+                min_value=None,
+                max_value=None,
+                is_percentage=False,
+            )
+            db.add(affix)
+            added_count += 1
+            self.stats['affixes'] += 1
 
-            except IntegrityError:
-                db.rollback()
+            if added_count % 100 == 0:
+                print(f"  ... {added_count} affixes loaded", flush=True)
 
-        print(f"  ✓ Loaded {self.stats['affixes']} affixes")
+        print(f"  ✓ Loaded {self.stats['affixes']} new affixes")
 
     def seed_aspects(self, db):
         """Seed aspects from d4lf data"""
@@ -209,30 +231,41 @@ class DatabaseSeeder:
         with open(aspects_file, 'r', encoding='utf-8') as f:
             aspects_data = json.load(f)
 
+        # Get default category (Utility)
+        default_category = db.query(AffixCategory).filter_by(name='Utility').first()
+
+        # Enforce dependency
+        if not default_category:
+            print("  ✗ Utility affix category not found. Seed categories first.")
+            return
+
+        # Pre-load existing aspects to avoid rollbacks
+        existing_internal_ids = {a.internal_id for a in db.query(Aspect.internal_id).all()}
+
+        added_count = 0
         for internal_id in aspects_data:
-            try:
-                # Convert internal_id to readable name
-                name = internal_id.replace('_', ' ').title()
+            if internal_id in existing_internal_ids:
+                continue
 
-                aspect = Aspect(
-                    internal_id=internal_id,
-                    name=name,
-                    category='Utility',  # Default, will be updated later
-                    # Leave ranges and descriptions empty for now
-                    min_value=None,
-                    max_value=None,
-                )
-                db.add(aspect)
-                db.flush()
-                self.stats['aspects'] += 1
+            # Convert internal_id to readable name
+            name = internal_id.replace('_', ' ').title()
 
-                if self.stats['aspects'] % 50 == 0:
-                    print(f"  ... {self.stats['aspects']} aspects loaded")
+            aspect = Aspect(
+                internal_id=internal_id,
+                name=name,
+                category_id=default_category.id,  # Now uses FK like affixes
+                # Leave ranges and descriptions empty for now
+                min_value=None,
+                max_value=None,
+            )
+            db.add(aspect)
+            added_count += 1
+            self.stats['aspects'] += 1
 
-            except IntegrityError:
-                db.rollback()
+            if added_count % 50 == 0:
+                print(f"  ... {added_count} aspects loaded", flush=True)
 
-        print(f"  ✓ Loaded {self.stats['aspects']} aspects")
+        print(f"  ✓ Loaded {self.stats['aspects']} new aspects")
 
 
 def main():

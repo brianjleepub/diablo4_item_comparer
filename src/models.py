@@ -69,6 +69,7 @@ class AffixCategory(Base):
 
     # Relationships
     affixes = relationship('Affix', back_populates='category')
+    aspects = relationship('Aspect', back_populates='category')
 
     def __repr__(self):
         return f"<AffixCategory(name='{self.name}')>"
@@ -128,7 +129,7 @@ class Aspect(Base):
     internal_id = Column(String(200), unique=True, nullable=False)
     name = Column(String(200), nullable=False)
     description = Column(Text)
-    category = Column(String(50))  # Offensive, Defensive, Utility, Mobility, Resource
+    category_id = Column(Integer, ForeignKey('affix_categories.id'))  # Now consistent with Affix
 
     # Value ranges (if aspect has variable scaling)
     min_value = Column(DECIMAL(10, 2))
@@ -144,10 +145,11 @@ class Aspect(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relationships
+    category = relationship('AffixCategory', back_populates='aspects')
     item_instance_aspects = relationship('ItemInstanceAspect', back_populates='aspect')
 
     def __repr__(self):
-        return f"<Aspect(name='{self.name}', category='{self.category}')>"
+        return f"<Aspect(name='{self.name}', category_id={self.category_id})>"
 
 
 # ============================================================================

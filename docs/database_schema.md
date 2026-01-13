@@ -74,7 +74,7 @@ User-defined character builds with affix priority weights.
 │ internal_id           TEXT UNIQUE NOT NULL                       │
 │ name                  TEXT NOT NULL                              │
 │ description           TEXT                                       │
-│ category              TEXT (Offensive,Defensive,Utility,etc.)   │
+│ category_id           INTEGER → affix_categories.id             │
 │ min_value             DECIMAL(10,2)                             │
 │ max_value             DECIMAL(10,2)                             │
 │ scaling_formula       TEXT                                       │
